@@ -1,48 +1,82 @@
 <script lang="ts">
-    import QuestionButton from "./components/QuestionButton.svelte";
-    import QuestionOption from "./components/QuestionOption.svelte";
-    import QuestionText from "./components/QuestionText.svelte";
-    import {answers, type Answer} from "../../../store";
+	import QuestionButton from './components/QuestionButton.svelte';
+	import QuestionOption from './components/QuestionOption.svelte';
+	import QuestionText from './components/QuestionText.svelte';
+	import { answers, type Answer } from '../../../store';
+	import { onMount } from 'svelte';
+	import QuestionProgressCircle from './components/QuestionProgressCircle.svelte';
 
-    export let data:  any;
-    
-    let currentQuestionIndex=0;
-    let answersValue: Answer[];
-    let selectedOption: null | string = null;
+	export let data: any;
 
-    answers.subscribe((value) => {
-        answersValue = value;
-    })
-    $: question = data.questions[currentQuestionIndex];
+	let currentQuestionIndex = 0;
+	let answersValue: Answer[];
+	let selectedOption: null | string = null;
+	let showCorrectAnswer: boolean = false;
 
-    const handleNext = () => {
-        if(data.questions.length === currentQuestionIndex+1){
-            currentQuestionIndex=0;
-        }
-        else{
-            currentQuestionIndex++;
-        }        
-    }
+	answers.subscribe((value) => {
+		answersValue = value;
+	});
+	$: question = data.questions[currentQuestionIndex];
+
+	const handleNext = () => {
+		if (data.questions.length === currentQuestionIndex + 1) {
+			currentQuestionIndex = 0;
+		} else {
+			currentQuestionIndex++;
+		}
+	};
+
+	const handleSubmit = () => {
+		if (!selectedOption) return;
+		if (showCorrectAnswer) {
+			showCorrectAnswer = false;
+			selectedOption = null;
+			currentQuestionIndex++;
+			return;
+		}
+		//evaluate if answer selected is correct
+		showCorrectAnswer = true;
+		answers.update((value) => {
+			const updatedAnswerState = value;
+			updatedAnswerState[currentQuestionIndex].isCorrect = selectedOption === question.answer;
+			return updatedAnswerState;
+		});
+	};
+
+	const handleChangeOption = (label: string) => {
+		selectedOption = label;
+		console.log('handleChangeOption', label);
+	};
+
+	onMount(() => {
+		answers.set(
+			data.questions.map((question: any) => {
+				return {
+					id: question.id,
+					isCorrect: null
+				};
+			})
+		);
+	});
 </script>
 
 <div class="w-full">
-    <QuestionText question={question.question} />
-    The selected option is {selectedOption}
-    <div class="flex justify-between flex-wrap cursor-pointer">
-        {#each question.options as option (option.id)}
-            <QuestionOption {option} {selectedOption}/>
-        {/each}
-    </div>
-    <QuestionButton/>
-    <button type="button" class="bg-indigo-500 ..." disabled>
-        <svg class="animate-spin h-5 w-5 mr-3 ..." viewBox="0 0 24 24">
-          <!-- ... -->
-        </svg>
-        Processing...
-      </button>
+	<div class="flex justify-center">
+		{#each answersValue as answer}
+			<QuestionProgressCircle isCorrect={answer.isCorrect} />
+		{/each}
+	</div>
+	<QuestionText question={question.question} />
+	<div class="flex justify-between flex-wrap cursor-pointer">
+		{#each question.options as option (option.id)}
+			<QuestionOption
+				{option}
+				{selectedOption}
+				{showCorrectAnswer}
+				answer={question.answer}
+				{handleChangeOption}
+			/>
+		{/each}
+	</div>
+	<QuestionButton {handleSubmit} {showCorrectAnswer} />
 </div>
-
-
-<style lang="postcss">
-    
-</style>

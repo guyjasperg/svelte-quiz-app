@@ -1,12 +1,11 @@
 <script>
-    import quizzes from "../data.json"
-    import Card from "../components/Card.svelte"
+	import quizzes from '../data.json';
+	import Card from '../components/Card.svelte';
 </script>
 
-{#each quizzes as quiz (quiz.id) }
-    <Card {quiz} ></Card>
+{#each quizzes as quiz (quiz.id)}
+	<Card {quiz} />
 {/each}
 
-    <style lang="postcss">
-
+<style lang="postcss">
 </style>
